@@ -1,0 +1,597 @@
+1)
+def aStarAlgo(start_node, stop_node):
+    open_set = set(start_node)
+    closed_set = set()
+    g = {}               
+    parents = {}        
+    g[start_node] = 0
+    parents[start_node] = start_node
+    
+    while len(open_set) > 0:
+        n = None
+        
+        for v in open_set:
+            if n == None or g[v] + heuristic(v) < g[n] + heuristic(n):
+                n = v
+                
+        if n == None:
+            print('Path does not exist!')
+            return None
+        
+        if n == stop_node:
+            path = []
+            while parents[n] != n:
+                path.append(n)
+                n = parents[n]
+            path.append(start_node)
+            path.reverse()
+            print('Path found: {}'.format(path))
+            return path
+
+        for (m, weight) in get_neighbors(n):
+            if m not in open_set and m not in closed_set:
+                open_set.add(m)
+                parents[m] = n
+                g[m] = g[n] + weight
+            else:
+                if g[m] > g[n] + weight:
+                    g[m] = g[n] + weight
+                    parents[m] = n
+                    if m in closed_set:
+                        closed_set.remove(m)
+                        open_set.add(m)
+
+        open_set.remove(n)
+        closed_set.add(n)
+        
+    print('Path does not exist!')
+    return None
+
+def get_neighbors(v):
+    if v in Graph_nodes:
+        return Graph_nodes[v]
+    
+def heuristic(n):
+    H_dist = {
+        'A': 11,
+        'B': 6,
+        'C': 5,
+        'D': 7,
+        'E': 3,
+        'F': 6,
+        'G': 5,
+        'H': 3,
+        'I': 1,
+        'J': 0
+    }
+    return H_dist[n]
+Graph_nodes = {
+    'A': [('B', 6), ('F', 3)],
+    'B': [('A', 6), ('C', 3), ('D', 2)],
+    'C': [('B', 3), ('D', 1), ('E', 5)],
+    'D': [('B', 2), ('C', 1), ('E', 8)],
+    'E': [('C', 5), ('D', 8), ('I', 5), ('J', 5)],
+    'F': [('A', 3), ('G', 1), ('H', 7)],
+    'G': [('F', 1), ('I', 3)],
+    'H': [('F', 7), ('I', 2)],
+    'I': [('E', 5), ('G', 3), ('H', 2), ('J', 3)],
+}
+aStarAlgo('A', 'J')
+################################################################################################################################
+2)
+
+# Recursive implementation of AO* aglorithm by Dr. K PARAMESHA, Professor, VVCE, Mysuru, INDIA
+
+class Graph:
+    def __init__(self, graph, heuristicNodeList, startNode):  #instantiate graph object with graph topology, heuristic values, start node
+        
+        self.graph = graph
+        self.H=heuristicNodeList
+        self.start=startNode
+        self.parent={}
+        self.status={}
+        self.solutionGraph={}
+     
+    def applyAOStar(self):         # starts a recursive AO* algorithm
+        self.aoStar(self.start, False)
+
+    def getNeighbors(self, v):     # gets the Neighbors of a given node
+        return self.graph.get(v,'')
+    
+    def getStatus(self,v):         # return the status of a given node
+        return self.status.get(v,0)
+    
+    def setStatus(self,v, val):    # set the status of a given node
+        self.status[v]=val
+    
+    def getHeuristicNodeValue(self, n):
+        return self.H.get(n,0)     # always return the heuristic value of a given node
+ 
+    def setHeuristicNodeValue(self, n, value):
+        self.H[n]=value            # set the revised heuristic value of a given node 
+        
+    
+    def printSolution(self):
+        print("FOR GRAPH SOLUTION, TRAVERSE THE GRAPH FROM THE START NODE:",self.start)
+        print("------------------------------------------------------------")
+        print(self.solutionGraph)
+        print("------------------------------------------------------------")
+    
+    def computeMinimumCostChildNodes(self, v):  # Computes the Minimum Cost of child nodes of a given node v     
+        minimumCost=0
+        costToChildNodeListDict={}
+        costToChildNodeListDict[minimumCost]=[]
+        flag=True
+        for nodeInfoTupleList in self.getNeighbors(v):  # iterate over all the set of child node/s
+            cost=0
+            nodeList=[]
+            for c, weight in nodeInfoTupleList:
+                cost=cost+self.getHeuristicNodeValue(c)+weight
+                nodeList.append(c)
+            
+            if flag==True:                      # initialize Minimum Cost with the cost of first set of child node/s 
+                minimumCost=cost
+                costToChildNodeListDict[minimumCost]=nodeList      # set the Minimum Cost child node/s
+                flag=False
+            else:                               # checking the Minimum Cost nodes with the current Minimum Cost   
+                if minimumCost>cost:
+                    minimumCost=cost
+                    costToChildNodeListDict[minimumCost]=nodeList  # set the Minimum Cost child node/s
+                
+              
+        return minimumCost, costToChildNodeListDict[minimumCost]   # return Minimum Cost and Minimum Cost child node/s
+                     
+    
+    def aoStar(self, v, backTracking):     # AO* algorithm for a start node and backTracking status flag
+        
+        print("HEURISTIC VALUES  :", self.H)
+        print("SOLUTION GRAPH    :", self.solutionGraph)
+        print("PROCESSING NODE   :", v)
+        print("-----------------------------------------------------------------------------------------")
+        
+        if self.getStatus(v) >= 0:        # if status node v >= 0, compute Minimum Cost nodes of v
+            minimumCost, childNodeList = self.computeMinimumCostChildNodes(v)
+            self.setHeuristicNodeValue(v, minimumCost)
+            self.setStatus(v,len(childNodeList))
+            
+            solved=True                   # check the Minimum Cost nodes of v are solved   
+            for childNode in childNodeList:
+                self.parent[childNode]=v
+                if self.getStatus(childNode)!=-1:
+                    solved=solved & False
+            
+            if solved==True:             # if the Minimum Cost nodes of v are solved, set the current node status as solved(-1)
+                self.setStatus(v,-1)    
+                self.solutionGraph[v]=childNodeList # update the solution graph with the solved nodes which may be a part of solution  
+            
+            
+            if v!=self.start:           # check the current node is the start node for backtracking the current node value    
+                self.aoStar(self.parent[v], True)   # backtracking the current node value with backtracking status set to true
+                
+            if backTracking==False:     # check the current call is not for backtracking 
+                for childNode in childNodeList:   # for each Minimum Cost child node
+                    self.setStatus(childNode,0)   # set the status of child node to 0(needs exploration)
+                    self.aoStar(childNode, False) # Minimum Cost child node is further explored with backtracking status as false
+                 
+        
+                                       
+h1 = {'A': 1, 'B': 6, 'C': 2, 'D': 12, 'E': 2, 'F': 1, 'G': 5, 'H': 7, 'I': 7, 'J': 1, 'T': 3}
+graph1 = {
+    'A': [[('B', 1), ('C', 1)], [('D', 1)]],
+    'B': [[('G', 1)], [('H', 1)]],
+    'C': [[('J', 1)]],
+    'D': [[('E', 1), ('F', 1)]],
+    'G': [[('I', 1)]]   
+}
+G1= Graph(graph1, h1, 'A')
+G1.applyAOStar() 
+G1.printSolution()
+
+h2 = {'A': 1, 'B': 6, 'C': 12, 'D': 10, 'E': 4, 'F': 4, 'G': 5, 'H': 7}  # Heuristic values of Nodes 
+graph2 = {                                        # Graph of Nodes and Edges 
+    'A': [[('B', 1), ('C', 1)], [('D', 1)]],      # Neighbors of Node 'A', B, C & D with repective weights 
+    'B': [[('G', 1)], [('H', 1)]],                # Neighbors are included in a list of lists
+    'D': [[('E', 1), ('F', 1)]]                   # Each sublist indicate a "OR" node or "AND" nodes
+}
+
+G2 = Graph(graph2, h2, 'A')                       # Instantiate Graph object with graph, heuristic values and start Node
+G2.applyAOStar()                                  # Run the AO* algorithm
+G2.printSolution()                                # Print the solution graph as output of the AO* algorithm search
+
+################################################################################################################################
+3)
+
+import pandas as pd
+import numpy as np
+
+def learn(concepts,target):
+    specific_h=concepts[0].copy()
+    general_h=[["?" for i in range (len(specific_h))]for i in range (len(specific_h))]
+    
+    for i,h in enumerate(concepts):
+        if target[i]=="yes":
+            for x in range(len(specific_h)):
+                if h[x]!=specific_h[x]:
+                    specific_h[x]='?'
+                    general_h[x][x]='?'
+        else:
+            for x in range(len(specific_h)):
+                if h[x]!=specific_h[x]:
+                    general_h[x][x]=specific_h[x]
+                else:
+                    general_h[x][x]='?'
+                    
+    general_h=[general_h[i] for i,val in enumerate(general_h) if val != ['?' for x in range(len(specific_h))]]
+    return specific_h,general_h
+
+data=pd.read_csv('finds.csv')
+concepts=np.array(data.iloc[:,0:-1])
+target=np.array(data.iloc[:,-1])
+s_final,g_final=learn(concepts,target)
+
+print("final s:",s_final)
+print("final g:",g_final)
+data.head()
+
+################################################################################################################################
+4)
+
+import math
+import csv
+
+class Node:
+    def __init__(self,attribute):
+        self.attribute=attribute
+        self.children=[]
+        self.answer=" "
+        
+def load_csv(filename):
+    lines=csv.reader(open(filename,"r"))
+    dataset=list(lines)
+    headers=dataset.pop(0)
+    return dataset,headers
+
+def subtables(data,col,delete):
+    dic={}
+    coldata=[row[col] for row in data]
+    attr=list(set(coldata))
+    for k in attr:
+        dic[k]=[]
+    for y in range(len(data)):
+        key=data[y][col]
+        if delete:
+            del data[y][col]
+        dic[key].append(data[y])
+    return attr,dic
+
+def entropy(s):
+    attr=list(set(s))
+    if len(attr)==1: # if all are +ve/-ve then entropy=0
+        return 0
+    counts=[0,0] # only two values posible 'yes' or 'no'
+    for i in range(2):
+        counts[i]=sum([1 for x in s if attr[i]==x])/(len(s)*1.0)
+    sums=0
+    for cnt  in counts:
+        sums+=-1*cnt*math.log(cnt,2)
+    return sums
+
+def compute_gain(data,col):
+    attvalues,dic = subtables(data,col,delete=False)
+    total_entropy = entropy([row[-1] for row in data])
+    for x in range(len(attvalues)):
+        ratio=len(dic[attvalues[x]])/(len(data)*1.0)
+        entro=entropy([row[-1] for row in dic[attvalues[x]]])
+        total_entropy-=ratio*entro
+    return total_entropy
+
+def build_tree(data,features):
+    lastcol=[row[-1] for row in data]
+    if(len(set(lastcol)))==1: #if all the samples have same label reurn that label
+        node=Node(" ")
+        node.answer=lastcol[0]
+        return node
+    n=len(data[0])-1
+    print("***********************************",n,"*********************************")
+    gains=[compute_gain(data,col)for col in range(n)]
+    split=gains.index(max(gains))
+    node = Node(features[split])
+    fea=features[:split]+features[split+1:]
+    attr,dic=subtables(data,split,delete=True)
+    for x in range(len(attr)):
+        child=build_tree(dic[attr[x]],fea)
+        node.children.append((attr[x],child))
+    return node
+
+def print_tree(node,level):
+    if node.answer!=" ":
+        print(" "*level,node.answer)
+        return
+    print(""*level,node.attribute)
+    for value,n in node.children:
+        print(" "*(level+1),value)
+        print_tree(n,level+2)
+
+def classify(node,x_test,features):
+    if node.answer!=" ":
+        print(node.answer)
+        return
+    pos=features.index(node.attribute)
+    for value,n in node.children:
+        if x_test[pos]==value:
+            classify(n,x_test,features)
+   
+#main program
+
+
+dataset,features=load_csv("playtennis.csv")
+node=build_tree(dataset,features)
+print("The decision tree for the dataset using id3 algorithm is")
+print_tree(node,0)
+testdata,features=load_csv("test_tennis.csv")
+for xtest in testdata:
+    print("the test instance:",xtest)
+    print("the predicted label:",end=" ")    
+    classify(node,xtest,features)
+
+################################################################################################################################
+5)
+import random
+from math import exp
+from random import seed
+import matplotlib.pyplot as plt
+
+def initialize_network(n_inputs, n_hidden, n_outputs):
+    network = list()
+    hidden_layer = [{'weights':[random.uniform(-0.5,0.5) for i in range(n_inputs + 1)]} for i in range(n_hidden)]
+    network.append(hidden_layer)
+    output_layer = [{'weights':[random.uniform(-0.5,0.5) for i in range(n_hidden + 1)]} for i in range(n_outputs)]
+    network.append(output_layer)
+    return network
+
+def activate(weights, inputs):
+    activation = weights[-1]
+    for i in range(len(weights)-1):
+        activation += weights[i] * inputs[i]
+    return activation
+
+def transfer(activation):
+    return 1.0 / (1.0 + exp(-activation))
+
+def forward_propagate(network, row):
+    inputs = row
+    for layer in network:
+        new_inputs = []
+        for neuron in layer:
+            activation = activate(neuron['weights'], inputs)
+            neuron['output'] = transfer(activation)
+            new_inputs.append(neuron['output'])
+        inputs = new_inputs
+    return inputs
+
+def transfer_derivative(output):
+    return output * (1.0 - output)
+
+def backward_propagate_error(network, expected):
+    for i in reversed(range(len(network))):
+        layer = network[i]
+        errors = list()
+        if i != len(network)-1:
+            for j in range(len(layer)):
+                error = 0.0
+                for neuron in network[i + 1]:
+                    error += (neuron['weights'][j] * neuron['delta'])
+                errors.append(error)
+        else:
+            for j in range(len(layer)):
+                neuron = layer[j]
+                errors.append(expected[j] - neuron['output'])
+        for j in range(len(layer)):
+            neuron = layer[j]
+            neuron['delta'] = errors[j] * transfer_derivative(neuron['output'])
+            
+def update_weights(network, row, l_rate):
+    for i in range(len(network)):
+        inputs = row[:-1]
+        if i != 0:
+            inputs = [neuron['output'] for neuron in network[i - 1]]
+        for neuron in network[i]:
+            for j in range(len(inputs)):
+                neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]
+            neuron['weights'][-1] += l_rate * neuron['delta']
+            
+def train_network(network, train, l_rate, n_epoch, n_outputs):
+        for epoch in range(n_epoch):
+            sum_error = 0
+            for row in train:
+                outputs = forward_propagate(network, row)
+                expected = [0 for i in range(n_outputs)]
+                expected[row[-1]] = 1
+                sum_error += sum([(expected[i]-outputs[i])**2 for i in range(len(expected))])
+                backward_propagate_error(network, expected)
+                update_weights(network, row, l_rate)
+            print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, sum_error))
+            
+seed(1)
+dataset = [[2.7810836,2.550537003,0],
+           [1.465489372,2.362125076,0],
+           [3.396561688,4.400293529,0],
+           [1.38807019,1.850220317,0],
+           [3.06407232,3.005305973,0],
+           [7.627531214,2.759262235,1],
+           [5.332441248,2.088626775,1],
+           [6.922596716,1.77106367,1],
+           [8.675418651,-0.242068655,1],
+           [7.673756466,3.508563011,1]]
+n_inputs = len(dataset[0]) - 1
+n_outputs = len(set([row[-1] for row in dataset]))
+
+network = initialize_network(n_inputs, 2, n_outputs)
+print(network)
+train_network(network, dataset, 0.5,20, n_outputs)
+for layer in network:
+    print(layer)
+
+################################################################################################################################
+6)
+
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+
+iris=datasets.load_iris()
+print("Iris dataset loaded...")
+
+X_train,X_test,y_train,y_test=train_test_split(iris.data,iris.target,test_size=0.2,random_state=70)
+print("Data set is split into training and testing ...")
+print("Size of training data and its lable",X_train.shape,y_train.shape)
+print("Size of testining data and its lable",X_test.shape,y_test.shape)
+
+for i in range(len(iris.target_names)):
+    print("Lable",i,"-",str(iris.target_names[i]))
+    
+gnb=GaussianNB()
+y_pred=gnb.fit(X_train,y_train).predict(X_test)
+
+print("Results of classification using Naive Bayes")
+for r in range(0,len(X_test)):
+    print("sample : ",str(X_test[r]),"Actual_Lable :",str(y_test[r]),"Predicted _Lable :",str(y_pred[r]))
+    
+print("classification accuracy:",gnb.score(X_test,y_test))
+
+################################################################################################################################
+7)
+
+from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import datasets
+
+iris = datasets.load_iris()
+X = pd.DataFrame(iris.data,)  
+X.columns = ['Sepal_Length','Sepal_Width','Petal_Length','Petal_Width']
+y = pd.DataFrame(iris.target)
+y.columns = ['Targets']
+colormap=np.array(['red','lime','black'])
+
+plt.figure(figsize=(14,7))
+
+plt.subplot(1,3,1)
+plt.title('Real')
+plt.scatter(X.Petal_Length,X.Petal_Width,c=colormap[y.Targets])
+
+plt.subplot(1,3,2)
+model=KMeans(n_clusters=3).fit(X)
+plt.title('KMeans')
+plt.scatter(X.Petal_Length,X.Petal_Width,c=colormap[model.labels_])
+
+gmm=GaussianMixture(n_components=3)
+y_cluster_gmm=gmm.fit(X).predict(X)
+plt.subplot(1,3,3)
+plt.title('GMM Classification')
+plt.scatter(X.Petal_Length,X.Petal_Width,c=colormap[y_cluster_gmm])
+print('Observation : The GMM using EM algorithm based clustering matched the True label more closely than the K-MEANS')
+
+################################################################################################################################
+8)
+
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+
+iris=datasets.load_iris()
+print("Iris dataset loaded...")
+x_train,x_test,y_train,y_test=train_test_split(iris.data,iris.target,test_size=0.2)
+print("Dataset is split into training and testing...")
+print("Size of training data and its label",x_train.shape,y_train.shape)
+print("size of testing data and its label",x_test.shape,y_test.shape)
+
+for i in range(len(iris.target_names)):
+    print("Label",i,"-",str(iris.target_names[i]))
+    
+classifier=KNeighborsClassifier(n_neighbors=1)
+y_pred=classifier.fit(x_train,y_train).predict(x_test)
+print("Results of Classification using K-nn with K=1")
+
+for r in range(len(x_test)):
+    print("Sample:",str(x_test[r]),"Actual-label:",str(y_test[r]),"Predicted-label:",str(y_pred[r]))
+    
+print("Classification accuracy:",classifier.score(x_test,y_test));
+
+################################################################################################################################
+9)
+
+import numpy as np
+import pandas as pd
+from sklearn.datasets import load_boston
+import matplotlib.pyplot as plt
+
+def h(x,a,b):
+    return a*x + b
+
+def error(a,x,b,y,w):
+    e = 0
+    m = len(x)
+    for i in range(m):
+        e += np.power(h(x[i],a,b)-y[i],2)*w[i]
+    return (e/(2*m)) 
+
+def step_gradient(a,x,b,y,learning_rate,w):
+    grad_a = 0
+    grad_b = 0
+    m = len(x)
+    for i in range(m):
+        grad_a += (2/m)*((h(x[i],a,b)-y[i])*x[i])*w[i]
+        grad_b += (2/m)*(h(x[i],a,b)-y[i])*w[i]
+    a = a - (grad_a * learning_rate)
+    b = b - (grad_b * learning_rate)
+    return a,b
+
+def descend(initial_a, initial_b, x, y, learning_rate, iterations,w):
+    a = initial_a
+    b = initial_b
+    for i in range(iterations):
+        e = error(a,x,b,y,w)
+        if i%1000 == 0:
+            print(f"Error: {e}-- a:{a}, b:{b}")
+        a, b = step_gradient(a,x,b,y, learning_rate,w)
+    return a,b
+
+boston = load_boston()
+features = pd.DataFrame(boston.data, columns=boston.feature_names)
+x = features['RM']
+X1 = sorted(np.array(x/x.mean()))
+X=X1+[i+1 for i in X1]
+Y=np.sin(X)
+plt.plot(X,Y,'g.')
+
+n = int(0.8 * len(X))
+x_train = X[:n]
+y_train = Y[:n]
+x_test = X[n:]
+y_test = Y[n:]
+
+w=np.exp([-(1.2-i)**2/(0.2) for i in x_train])
+
+plt.plot(x_train, y_train,'r.',x_train,w,'b.')
+
+a = 1.8600662368042573
+b = -0.7962243178421666
+learning_rate = 0.01
+iterations = 10000
+
+final_a, final_b = descend(a,b,x_train,y_train, learning_rate, iterations,w)
+
+H=[i*final_a+final_b for i in x_train]
+
+plt.plot(x_train, y_train,'r.',x_train, H,'b')
+print(error(a,x_test,b,y_test,w))
+print(error(final_a,x_test, final_b,y_test,w)) 
+plt.plot(x_test,y_test,'b.',x_train,y_train,'r.')
+
+
+
+
+
